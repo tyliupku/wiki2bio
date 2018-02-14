@@ -18,7 +18,7 @@ to model the semantic relevance between the generated description and the table.
 # Data
 The dataset for evaluation is [WIKIBIO](https://github.com/DavidGrangier/wikipedia-biography-dataset) from [Lebret et al. 2016](https://arxiv.org/abs/1603.07771). We preprocess the dataset in a easy-to-use way.
 
-The ```original_data``` we proprocessed can be downloaded via [Google Drive](https://drive.google.com/file/d/15AV8LeWY3nzCKb8RRbM8kwHAp_DUZ5gf/view?usp=sharing) or [Baidu Yupan]().
+The ```original_data``` we proprocessed can be downloaded via [Google Drive](https://drive.google.com/file/d/15AV8LeWY3nzCKb8RRbM8kwHAp_DUZ5gf/view?usp=sharing) or [Baidu Yunpan](https://pan.baidu.com/s/1c324Vs8).
 
 ```
 original_data
@@ -38,3 +38,14 @@ The whole dataset is divided into training set (582,659 instances, 80%), valid s
 
 # Usage
 To be done...
+
+# Reference
+If you find the code and data resources helpful, please cite the following paper:
+```
+@article{liu2017table,
+  title={Table-to-text Generation by Structure-aware Seq2seq Learning},
+  author={Liu, Tianyu and Wang, Kexiang and Sha, Lei and Chang, Baobao and Sui, Zhifang},
+  journal={arXiv preprint arXiv:1711.09724},
+  year={2017}
+}
+```
