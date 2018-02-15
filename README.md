@@ -15,6 +15,16 @@ in order to incorporate field information into table representation.
 In the decoding phase, dual attention mechanism which contains word level attention and field level attention is proposed 
 to model the semantic relevance between the generated description and the table.
 
+# Installation
+A GPU is strongly recommended for training the model. It takes about 36~48 hours to finish training on a GTX1080 GPU.
+##Tensorflow
+Our code is based on Tensorflow 1.0.0. You can find the installation instructions [here](https://www.tensorflow.org/versions/r1.1/install/).
+##Dependencies
+```requirements.txt``` summarize the dependencies of our code. You can install these dependencies by:
+```
+pip install -r requirements.txt
+```
+
 # Data
 The dataset for evaluation is [WIKIBIO](https://github.com/DavidGrangier/wikipedia-biography-dataset) from [Lebret et al. 2016](https://arxiv.org/abs/1603.07771). We preprocess the dataset in a easy-to-use way.
 
@@ -68,7 +78,7 @@ After preprocessing, the directory structure looks like follows:
 Experiment results will be stored in the ```results/res``` directory.
 
 ## train
-For training, turn the 'mode' in ```main.py``` to ```train```:
+For training, turn the "mode" in ```main.py``` to ```train```:
 ```
 tf.app.flags.DEFINE_string("mode",'train','train or test')
 ```
@@ -80,7 +90,7 @@ In the training stage, the model will report BLEU and ROUGE scores on the valid 
 The detailed results will be stored in the  ```results/res/CUR_MODEL_TIME_STAMP/log.txt```.
 
 ## test
-For testing, turn the mode in ```main.py``` to ```train``` and the load to the selected model directory:
+For testing, turn the "mode" in ```main.py``` to ```train``` and the "load" to the selected model directory:
 ```
 tf.app.flags.DEFINE_string("mode",'test','train or test')
 tf.app.flags.DEFINE_string("load",'YOUR_BEST_MODEL_TIME_STAMP','load directory')
