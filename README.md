@@ -37,7 +37,58 @@ vocabularies: word_vocab.txt; field_vocab.txt
 The whole dataset is divided into training set (582,659 instances, 80%), valid set (72,831 instances, 10%) and testing set (72,831 instances, 10%).
 
 # Usage
-To be done...
+## preprocess
+Firstly, we extract words, field types and position information from the original infoboxes ```*.box```.
+After that, we idlize the extracted words and field type according to the word vocabulary ```word_vocab.txt``` and field vocabulary ```field_vocab.txt```. 
+```
+python preprocess.py
+```
+After preprocessing, the directory structure looks like follows:
+```
+-original_data
+-processed_data
+  |-train
+    |-train.box.pos
+    |-train.box.rpos
+    |-train.box.val
+    |-train.box.lab
+    |-train.summary.id
+    |-train.box.val.id
+    |-train.box.lab.id
+  |-test
+    |-...
+  |-valid
+    |-...
+-results
+  |-evaluation
+  |-res
+```
+```*.box.pos```, ```*.box.rpos```, ```*.box.val```, ```*.box.lab``` represents the word position p+, word position p-, field content and field types, respectively.
+
+Experiment results will be stored in the ```results/res``` directory.
+
+## train
+For training, turn the 'mode' in ```main.py``` to ```train```:
+```
+tf.app.flags.DEFINE_string("mode",'train','train or test')
+```
+Then run ```main.py```:
+```
+python main.py
+```
+In the training stage, the model will report BLEU and ROUGE scores on the valid set and store the model parameters after certain training steps.
+The detailed results will be stored in the  ```results/res/CUR_MODEL_TIME_STAMP/log.txt```.
+
+## test
+For testing, turn the mode in ```main.py``` to ```train``` and the load to the selected model directory:
+```
+tf.app.flags.DEFINE_string("mode",'test','train or test')
+tf.app.flags.DEFINE_string("load",'YOUR_BEST_MODEL_TIME_STAMP','load directory')
+```
+Then test your model by running:
+```
+python main.py
+```
 
 # Reference
 If you find the code and data resources helpful, please cite the following paper:
