@@ -26,7 +26,7 @@ tf.app.flags.DEFINE_integer("source_vocab", 20003,'vocabulary size')
 tf.app.flags.DEFINE_integer("field_vocab", 1480,'vocabulary size')
 tf.app.flags.DEFINE_integer("position_vocab", 31,'vocabulary size')
 tf.app.flags.DEFINE_integer("target_vocab", 20003,'vocabulary size')
-tf.app.flags.DEFINE_integer("report", 200,'report valid results after some steps')
+tf.app.flags.DEFINE_integer("report", 5000,'report valid results after some steps')
 tf.app.flags.DEFINE_float("learning_rate", 0.0005,'learning rate')
 
 tf.app.flags.DEFINE_string("mode",'train','train or test')
