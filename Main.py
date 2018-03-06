@@ -125,11 +125,13 @@ def save_model(model, save_dir, cnt):
 
 def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     if mode == 'valid':
-        texts_path = "original_data/valid.summary"
+        # texts_path = "original_data/valid.summary"
+        texts_path = "processed_data/valid/valid.box.val"
         gold_path = gold_path_valid
         evalset = dataloader.dev_set
     else:
-        texts_path = "original_data/test.summary"
+        # texts_path = "original_data/test.summary"
+        texts_path = "processed_data/test/test.box.val"
         gold_path = gold_path_test
         evalset = dataloader.test_set
     
