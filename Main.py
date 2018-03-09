@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_integer("field_vocab", 1480,'vocabulary size')
 tf.app.flags.DEFINE_integer("position_vocab", 31,'vocabulary size')
 tf.app.flags.DEFINE_integer("target_vocab", 20003,'vocabulary size')
 tf.app.flags.DEFINE_integer("report", 5000,'report valid results after some steps')
-tf.app.flags.DEFINE_float("learning_rate", 0.0005,'learning rate')
+tf.app.flags.DEFINE_float("learning_rate", 0.0003,'learning rate')
 
 tf.app.flags.DEFINE_string("mode",'train','train or test')
 tf.app.flags.DEFINE_string("load",'0','load directory') # BBBBBESTOFAll
@@ -102,16 +102,7 @@ def train(sess, dataloader, model):
 
 
 def test(sess, dataloader, model):
-    # evaluate_real(sess, dataloader, model)
-    # print "finish"
-    # time.sleep(30)
     evaluate(sess, dataloader, model, save_dir, 'test')
-    # write_log(evaluate_nobeam(sess, dataloader, model, 'data/res/1506147369166/loads/10'))
-    # model.load(save_dir)
-    # print evaluate(sess, dataloader, model)
-    # print_beam(sess, dataloader, model)
-    # save_model(model, save_dir, 2)
-    # save_att(sess, dataloader, model)
 
 def save_model(model, save_dir, cnt):
     new_dir = save_dir + 'loads' + '/' 
@@ -157,24 +148,6 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
                 real_sum, unk_sum, mask_sum = [], [], []
                 for tk, tid in enumerate(summary):
                     if tid == 3:
-                        '''
-                        print aatt.shape
-                        # print len(gold_list_real[k][0])
-                        print len(summary)
-                        print len(texts[k])
-                        print texts[k]
-                        if len(texts[k]) > 50:
-                            print texts[k][50:]
-                        else:
-                            print "no more than 50"
-                        # print texts
-                        print aatt[tk,:,idx]
-                        print np.sum(aatt[tk,:,idx])
-                        print np.sum(aatt[tk,: len(texts[k]),idx])
-                        print np.argmax(aatt[tk,: len(texts[k]),idx])
-                        print texts[k][np.argmax(aatt[tk,: len(texts[k]),idx])]
-                        print "=" * 6
-                        '''
                         sub = texts[k][np.argmax(atts[tk,: len(texts[k]),idx])]
                         real_sum.append(sub)
                         mask_sum.append("**" + str(sub) + "**")
@@ -188,9 +161,6 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
                 pred_mask.append([str(x) for x in mask_sum])
                 k += 1
                 idx += 1
-                # if k % 500 == 0:
-                #    print real_sum
-                #    print k
     write_word(pred_mask, ksave_dir, mode + "_summary_copy.txt")
     write_word(pred_unk, ksave_dir, mode + "_summary_unk.txt")
 
@@ -219,6 +189,8 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     # print nocopy_result
     result = copy_result + nocopy_result 
     # print result
+    if mode == 'valid':
+        print result
 
     return result
 
