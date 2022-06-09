@@ -22,26 +22,26 @@ tf.app.flags.DEFINE_integer("field_size", 50, "Size of embedding.")
 tf.app.flags.DEFINE_integer("pos_size", 5, "Size of embedding.")
 tf.app.flags.DEFINE_integer("batch_size", 32, "Batch size of train set.")
 tf.app.flags.DEFINE_integer("epoch", 50, "Number of training epoch.")
-tf.app.flags.DEFINE_integer("source_vocab", 20003,'vocabulary size')
-tf.app.flags.DEFINE_integer("field_vocab", 1480,'vocabulary size')
-tf.app.flags.DEFINE_integer("position_vocab", 31,'vocabulary size')
-tf.app.flags.DEFINE_integer("target_vocab", 20003,'vocabulary size')
-tf.app.flags.DEFINE_integer("report", 5000,'report valid results after some steps')
-tf.app.flags.DEFINE_float("learning_rate", 0.0003,'learning rate')
+tf.app.flags.DEFINE_integer("source_vocab", 20003, 'vocabulary size')
+tf.app.flags.DEFINE_integer("field_vocab", 1480, 'vocabulary size')
+tf.app.flags.DEFINE_integer("position_vocab", 31, 'vocabulary size')
+tf.app.flags.DEFINE_integer("target_vocab", 20003, 'vocabulary size')
+tf.app.flags.DEFINE_integer("report", 5000, 'report valid results after some steps')
+tf.app.flags.DEFINE_float("learning_rate", 0.0003, 'learning rate')
 
-tf.app.flags.DEFINE_string("mode",'train','train or test')
-tf.app.flags.DEFINE_string("load",'0','load directory') # BBBBBESTOFAll
-tf.app.flags.DEFINE_string("dir",'processed_data','data set directory')
-tf.app.flags.DEFINE_integer("limits", 0,'max data set size')
+tf.app.flags.DEFINE_string("mode", 'train', 'train or test')
+tf.app.flags.DEFINE_string("load", '0', 'load directory') # BBBBBESTOFAll
+tf.app.flags.DEFINE_string("dir", 'processed_data', 'data set directory')
+tf.app.flags.DEFINE_integer("limits", 0, 'max data set size')
 
 
-tf.app.flags.DEFINE_boolean("dual_attention", True,'dual attention layer or normal attention')
-tf.app.flags.DEFINE_boolean("fgate_encoder", True,'add field gate in encoder lstm')
+tf.app.flags.DEFINE_boolean("dual_attention", True, 'dual attention layer or normal attention')
+tf.app.flags.DEFINE_boolean("fgate_encoder", True, 'add field gate in encoder lstm')
 
-tf.app.flags.DEFINE_boolean("field", False,'concat field information to word embedding')
-tf.app.flags.DEFINE_boolean("position", False,'concat position information to word embedding')
-tf.app.flags.DEFINE_boolean("encoder_pos", True,'position information in field-gated encoder')
-tf.app.flags.DEFINE_boolean("decoder_pos", True,'position information in dual attention decoder')
+tf.app.flags.DEFINE_boolean("field", False, 'concat field information to word embedding')
+tf.app.flags.DEFINE_boolean("position", False, 'concat position information to word embedding')
+tf.app.flags.DEFINE_boolean("encoder_pos", True, 'position information in field-gated encoder')
+tf.app.flags.DEFINE_boolean("decoder_pos", True, 'position information in dual attention decoder')
 
 
 FLAGS = tf.app.flags.FLAGS
@@ -50,8 +50,8 @@ last_best = 0.0
 gold_path_test = 'processed_data/test/test_split_for_rouge/gold_summary_'
 gold_path_valid = 'processed_data/valid/valid_split_for_rouge/gold_summary_'
 
-# test phase
 if FLAGS.load != "0":
+# load an existing model either for further training or testing
     save_dir = 'results/res/' + FLAGS.load + '/'
     save_file_dir = save_dir + 'files/'
     pred_dir = 'results/evaluation/' + FLAGS.load + '/'
@@ -61,8 +61,8 @@ if FLAGS.load != "0":
         os.mkdir(save_file_dir)
     pred_path = pred_dir + 'pred_summary_'
     pred_beam_path = pred_dir + 'beam_summary_'
-# train phase
 else:
+# train a new model
     prefix = str(int(time.time() * 1000))
     save_dir = 'results/res/' + prefix + '/'
     save_file_dir = save_dir + 'files/'
@@ -79,6 +79,9 @@ log_file = save_dir + 'log.txt'
 
 
 def train(sess, dataloader, model):
+    global save_dir
+    global pred_dir
+    
     write_log("#######################################################")
     for flag in FLAGS.__flags:
         write_log(flag + " = " + str(FLAGS.__flags[flag]))
@@ -102,7 +105,7 @@ def train(sess, dataloader, model):
 
 
 def test(sess, dataloader, model):
-    evaluate(sess, dataloader, model, save_dir, 'test')
+    write_log(evaluate(sess, dataloader, model, save_dir, 'test'))
 
 def save_model(model, save_dir, cnt):
     new_dir = save_dir + 'loads' + '/' 
@@ -198,7 +201,7 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
 
 def write_log(s):
     print s
-    with open(log_file, 'a') as f:
+    with open(log_file, 'a+') as f:
         f.write(s+'\n')
 
 
