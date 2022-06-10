@@ -67,11 +67,21 @@ else:
     save_dir =  os.path.join(os.path.dirname(__file__), 'results/res/' + prefix)
     save_file_dir = os.path.join(save_dir, 'files')
     pred_dir = os.path.join(os.path.dirname(__file__), 'results/evaluation/' + prefix)
-    os.mkdir(save_dir)
-    if not os.path.exists(pred_dir):
-        os.mkdir(pred_dir)
-    if not os.path.exists(save_file_dir):
-        os.mkdir(save_file_dir)
+    try: 
+        os.makedirs(pred_dir)
+    except OSError:
+        if not os.path.isdir(pred_dir):
+            raise
+    try: 
+        os.makedirs(save_dir)
+    except OSError:
+        if not os.path.isdir(save_dir):
+            raise
+    try: 
+        os.makedirs(pred_dir)
+    except OSError:
+        if not os.path.isdir(pred_dir):
+            raise
     pred_path = pred_dir + '/pred_summary_'
     pred_beam_path = pred_dir + '/beam_summary_'
 
@@ -109,11 +119,12 @@ def test(sess, dataloader, model):
 
 def save_model(model, save_dir, cnt):
     new_dir = os.path.join(save_dir, 'loads')
-    if not os.path.exists(new_dir):
-        os.mkdir(new_dir)
     nnew_dir = os.path.join(new_dir, str(cnt))
-    if not os.path.exists(nnew_dir):
-        os.mkdir(nnew_dir)
+    try: 
+        os.makedirs(nnew_dir)
+    except OSError:
+        if not os.path.isdir(nnew_dir):
+            raise
     model.save(nnew_dir)
     return nnew_dir
 

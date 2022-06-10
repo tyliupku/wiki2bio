@@ -86,6 +86,11 @@ def format_time(seconds):
     return f
 
 def copy_file(dst, src=os.getcwd()):
+    try: 
+        os.makedirs(src)
+    except OSError:
+        if not os.path.isdir(src):
+            raise
     files = os.listdir(src)
     for file in files:
         file_ext = file.split('.')[-1]

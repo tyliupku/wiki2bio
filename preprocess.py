@@ -270,15 +270,31 @@ def preprocess():
 
 
 def make_dirs():
-    os.mkdir(os.path.join(os.path.dirname(__file__), "results/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "results/res/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "results/evaluation/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "processed_data/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "processed_data/train/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "processed_data/test/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "processed_data/valid/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "processed_data/test/test_split_for_rouge/"))
-    os.mkdir(os.path.join(os.path.dirname(__file__), "processed_data/valid/valid_split_for_rouge/"))
+    try: 
+        os.makedirs(os.path.dirname(__file__)+"/results/res/")
+    except OSError:
+        if not os.path.isdir(os.path.dirname(__file__)+"/results/res/"):
+            raise
+    try: 
+        os.makedirs(os.path.dirname(__file__)+"/results/evaluation/")
+    except OSError:
+        if not os.path.isdir(os.path.dirname(__file__)+"/results/evaluation/"):
+            raise
+    try: 
+        os.makedirs(os.path.dirname(__file__)+"/processed_data/train/")
+    except OSError:
+        if not os.path.isdir(os.path.dirname(__file__)+"/processed_data/train/"):
+            raise
+    try: 
+        os.makedirs(os.path.dirname(__file__)+"/processed_data/test/test_split_for_rouge/")
+    except OSError:
+        if not os.path.isdir(os.path.dirname(__file__)+"/processed_data/test/test_split_for_rouge/"):
+            raise
+    try: 
+        os.makedirs(os.path.dirname(__file__)+"/processed_data/valid/valid_split_for_rouge/")
+    except OSError:
+        if not os.path.isdir(os.path.dirname(__file__)+"/processed_data/valid/valid_split_for_rouge/"):
+            raise
 
 if __name__ == '__main__':
     make_dirs()
