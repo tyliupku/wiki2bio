@@ -220,7 +220,7 @@ def main():
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
-        copy_file(save_file_dir)
+        #copy_file(save_file_dir)
         dataloader = DataLoader(FLAGS.dir, FLAGS.limits)
         model = SeqUnit(batch_size=FLAGS.batch_size, hidden_size=FLAGS.hidden_size, emb_size=FLAGS.emb_size,
                         field_size=FLAGS.field_size, pos_size=FLAGS.pos_size, field_vocab=FLAGS.field_vocab,

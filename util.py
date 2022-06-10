@@ -101,4 +101,3 @@ def write_word(pred_list, save_dir, name):
     ss = open(save_dir + name, "w+")
     for item in pred_list:
         ss.write(" ".join(item) + '\n')
-            
