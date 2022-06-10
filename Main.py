@@ -94,26 +94,64 @@ def train(sess, dataloader, model):
     global save_dir
     global pred_dir
     
-    write_log("#######################################################")
-    for flag in FLAGS.__flags:
-        write_log(flag + " = " + str(FLAGS.__flags[flag]))
-    write_log("#######################################################")
-    trainset = dataloader.train_set
-    k = 0
-    loss, start_time = 0.0, time.time()
-    for _ in range(FLAGS.epoch):
-        for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
-            loss += model(x, sess)
-            k += 1
-            progress_bar(k%FLAGS.report, FLAGS.report)
-            if (k % FLAGS.report == 0):
-                cost_time = time.time() - start_time
-                write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
+    if FLAGS.load != "0":
+        k = 0
+        try:
+            k = int(save_dir.rstrip('/').split("/")[-1])
+        except ValueError:
+            pass
+        if k > 0:
+            # Loaded model from last train epoch
+            if k < FLAGS.epoch:
+            # Maximum number of epochs not reached yet
+                proper_dir = "/".join(FLAGS.load.split("/"))
+                save_dir = os.path.join(os.path.dirname(__file__), '/results/res/' + proper_dir)
+                pred_dir = os.path.join(os.path.dirname(__file__), '/results/evaluation/' + proper_dir)
+                write_log("#######################################################")
+                for flag, val in FLAGS.flag_values_dict().iteritems():
+                    write_log(flag + " = " + str(val))
+                write_log("#######################################################")
+                trainset = dataloader.train_set
                 loss, start_time = 0.0, time.time()
-                if k // FLAGS.report >= 1: 
-                    ksave_dir = save_model(model, save_dir, k // FLAGS.report)
-                    write_log(evaluate(sess, dataloader, model, ksave_dir, 'valid'))
-                    
+                for _ in range(FLAGS.epoch):
+                    for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
+                        loss += model(x, sess)
+                        k += 1
+                        progress_bar(k%FLAGS.report, FLAGS.report)
+                        if (k % FLAGS.report == 0):
+                            cost_time = time.time() - start_time
+                            write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
+                            loss, start_time = 0.0, time.time()
+                            if k // FLAGS.report >= 1: 
+                                ksave_dir = save_model(model, save_dir, k // FLAGS.report)
+                                write_log(evaluate(sess, dataloader, model, ksave_dir, 'valid'))
+            else:
+                # Maximum number of training epochs reached
+                print("Model can not be trained further -- maximum number of training epochs reached")
+        else:
+            # Parsing failed -- can not train model
+            print("Model can not be trained further -- last known train epoch missing")
+    else:
+        write_log("#######################################################")
+        for flag, val in FLAGS.flag_values_dict().iteritems():
+            write_log(flag + " = " + str(val))
+        write_log("#######################################################")
+        trainset = dataloader.train_set
+        k = 0
+        loss, start_time = 0.0, time.time()
+        for _ in range(FLAGS.epoch):
+            for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
+                loss += model(x, sess)
+                k += 1
+                progress_bar(k%FLAGS.report, FLAGS.report)
+                if (k % FLAGS.report == 0):
+                    cost_time = time.time() - start_time
+                    write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
+                    loss, start_time = 0.0, time.time()
+                    if k // FLAGS.report >= 1: 
+                        ksave_dir = save_model(model, save_dir, k // FLAGS.report)
+                        write_log(evaluate(sess, dataloader, model, ksave_dir, 'valid'))
+
 
 
 def test(sess, dataloader, model):
