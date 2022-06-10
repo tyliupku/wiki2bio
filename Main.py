@@ -64,6 +64,7 @@ if FLAGS.load != "0":
 else:
 # train a new model
     prefix = str(int(time.time() * 1000))
+    make_dirs()
     save_dir =  os.path.join(os.path.dirname(__file__), 'results/res/' + prefix)
     save_file_dir = os.path.join(save_dir, 'files')
     pred_dir = os.path.join(os.path.dirname(__file__), 'results/evaluation/' + prefix)
