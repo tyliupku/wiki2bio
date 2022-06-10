@@ -12,6 +12,7 @@ from DataLoader import DataLoader
 import numpy as np
 from PythonROUGE import PythonROUGE
 from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+from datetime import datetime
 from preprocess import *
 from util import * 
 
@@ -63,7 +64,7 @@ if FLAGS.load != "0":
     pred_beam_path = pred_dir + '/beam_summary_'
 else:
 # train a new model
-    prefix = str(int(time.time() * 1000))
+    prefix = datetime.now().strftime("%Y%m%d%H%M%S")
     make_dirs()
     save_dir =  os.path.join(os.path.dirname(__file__), 'results/res/' + prefix)
     save_file_dir = os.path.join(save_dir, 'files')

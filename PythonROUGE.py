@@ -8,6 +8,7 @@ mail: mba@priberam.pt
 import os
 import re
 import time
+from datetime import datetime
 
 # Wrapper function to use ROUGE from Python easily
 # Inputs:
@@ -48,7 +49,7 @@ def PythonROUGE(guess_summ_list,ref_summ_list,ngram_order=2):
     
     # this is a temporary XML file which will contain information
     # in the format ROUGE uses
-    prefix = str(int(time.time() * 1000))
+    prefix = datetime.now().strftime("%Y%m%d%H%M%S")
     xml_path = os.path.join(os.path.dirname(__file__), 'temp.xml')
     xml_file = open(xml_path,'w')
     xml_file.write('<ROUGE-EVAL version="1.0">\n')
