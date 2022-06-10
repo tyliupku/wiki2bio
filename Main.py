@@ -95,6 +95,7 @@ def train(sess, dataloader, model):
     global pred_dir
     
     if FLAGS.load != "0":
+    # Continue training of existing model
         k = 0
         try:
             k = int(save_dir.rstrip('/').split("/")[-1])
@@ -132,6 +133,7 @@ def train(sess, dataloader, model):
             # Parsing failed -- can not train model
             print("Model can not be trained further -- last known train epoch missing")
     else:
+    # Create and train a new model
         write_log("#######################################################")
         for flag, val in FLAGS.flag_values_dict().iteritems():
             write_log(flag + " = " + str(val))
@@ -257,11 +259,11 @@ def write_log(s):
 
 
 def main():
-    config = tf.ConfigProto(allow_soft_placement=True)
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         #copy_file(save_file_dir)
-        dataloader = DataLoader(FLAGS.dir, FLAGS.limits)
+        dataloader = DataLoader(os.path.join(os.path.dirname(__file__), FLAGS.dir), FLAGS.limits)
         model = SeqUnit(batch_size=FLAGS.batch_size, hidden_size=FLAGS.hidden_size, emb_size=FLAGS.emb_size,
                         field_size=FLAGS.field_size, pos_size=FLAGS.pos_size, field_vocab=FLAGS.field_vocab,
                         source_vocab=FLAGS.source_vocab, position_vocab=FLAGS.position_vocab,
@@ -269,7 +271,7 @@ def main():
                         field_concat=FLAGS.field, position_concat=FLAGS.position,
                         fgate_enc=FLAGS.fgate_encoder, dual_att=FLAGS.dual_attention, decoder_add_pos=FLAGS.decoder_pos,
                         encoder_add_pos=FLAGS.encoder_pos, learning_rate=FLAGS.learning_rate)
-        sess.run(tf.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
         # copy_file(save_file_dir)
         if FLAGS.load != '0':
             model.load(save_dir)

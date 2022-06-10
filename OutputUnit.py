@@ -14,14 +14,14 @@ class OutputUnit(object):
         self.scope_name = scope_name
         self.params = {}
 
-        with tf.variable_scope(scope_name):
-            self.W = tf.get_variable('W', [input_size, output_size])
-            self.b = tf.get_variable('b', [output_size], initializer=tf.zeros_initializer(), dtype=tf.float32)
+        with tf.compat.v1.variable_scope(scope_name):
+            self.W = tf.compat.v1.get_variable('W', [input_size, output_size])
+            self.b = tf.compat.v1.get_variable('b', [output_size], initializer=tf.zeros_initializer(), dtype=tf.float32)
 
         self.params.update({'W': self.W, 'b': self.b})
 
     def __call__(self, x, finished = None):
-        out = tf.nn.xw_plus_b(x, self.W, self.b)
+        out = tf.compat.v1.nn.xw_plus_b(x, self.W, self.b)
 
         if finished is not None:
             out = tf.where(finished, tf.zeros_like(out), out)
