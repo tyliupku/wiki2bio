@@ -64,7 +64,7 @@ if FLAGS.load != "0":
     pred_beam_path = pred_dir + '/beam_summary_'
 else:
 # train a new model
-    prefix = datetime.now().strftime("%Y%m%d%H%M%S")
+    prefix = 'model_retrained_by_user_' + datetime.now().strftime("%Y%m%d%H%M%S")
     make_dirs()
     save_dir =  os.path.join(os.path.dirname(__file__), 'results/res/' + prefix)
     save_file_dir = os.path.join(save_dir, 'files')

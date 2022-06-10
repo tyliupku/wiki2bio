@@ -50,7 +50,7 @@ def PythonROUGE(guess_summ_list,ref_summ_list,ngram_order=2):
     # this is a temporary XML file which will contain information
     # in the format ROUGE uses
     prefix = datetime.now().strftime("%Y%m%d%H%M%S")
-    xml_path = os.path.join(os.path.dirname(__file__), 'temp.xml')
+    xml_path = os.path.join(os.path.dirname(__file__), prefix + 'temp.xml')
     xml_file = open(xml_path,'w')
     xml_file.write('<ROUGE-EVAL version="1.0">\n')
     for guess_summ_index,guess_summ_file in enumerate(guess_summ_list):
@@ -62,7 +62,7 @@ def PythonROUGE(guess_summ_list,ref_summ_list,ngram_order=2):
     
     
     # this is the file where the output of ROUGE will be stored
-    ROUGE_output_path = prefix + 'ROUGE_result.txt'
+    ROUGE_output_path = os.path.join(os.path.dirname(__file__), prefix + 'ROUGE_result.txt')
     
     # this is where we run ROUGE itself
     exec_command = ROUGE_path + ' -e ' + data_path + ' ' + options + ' -x ' + xml_path + ' > ' + ROUGE_output_path
