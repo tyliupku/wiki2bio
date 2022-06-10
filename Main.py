@@ -47,35 +47,35 @@ tf.app.flags.DEFINE_boolean("decoder_pos", True, 'position information in dual a
 FLAGS = tf.app.flags.FLAGS
 last_best = 0.0
 
-gold_path_test = 'processed_data/test/test_split_for_rouge/gold_summary_'
-gold_path_valid = 'processed_data/valid/valid_split_for_rouge/gold_summary_'
+gold_path_test = os.path.join(os.path.dirname(__file__), 'processed_data/test/test_split_for_rouge/gold_summary_')
+gold_path_valid = os.path.join(os.path.dirname(__file__), 'processed_data/valid/valid_split_for_rouge/gold_summary_')
 
 if FLAGS.load != "0":
 # load an existing model either for further training or testing
-    save_dir = 'results/res/' + FLAGS.load + '/'
-    save_file_dir = save_dir + 'files/'
-    pred_dir = 'results/evaluation/' + FLAGS.load + '/'
+    save_dir = os.path.join(os.path.dirname(__file__), '/results/res/' + FLAGS.load)
+    save_file_dir = os.path.join(save_dir, 'files')
+    pred_dir = os.path.join(os.path.dirname(__file__), 'results/evaluation/' + FLAGS.load)
     if not os.path.exists(pred_dir):
         os.mkdir(pred_dir)
     if not os.path.exists(save_file_dir):
         os.mkdir(save_file_dir)
-    pred_path = pred_dir + 'pred_summary_'
-    pred_beam_path = pred_dir + 'beam_summary_'
+    pred_path = pred_dir + '/pred_summary_'
+    pred_beam_path = pred_dir + '/beam_summary_'
 else:
 # train a new model
     prefix = str(int(time.time() * 1000))
-    save_dir = 'results/res/' + prefix + '/'
-    save_file_dir = save_dir + 'files/'
-    pred_dir = 'results/evaluation/' + prefix + '/'
+    save_dir =  os.path.join(os.path.dirname(__file__), 'results/res/' + prefix)
+    save_file_dir = os.path.join(save_dir, 'files')
+    pred_dir = os.path.join(os.path.dirname(__file__), 'results/evaluation/' + prefix)
     os.mkdir(save_dir)
     if not os.path.exists(pred_dir):
         os.mkdir(pred_dir)
     if not os.path.exists(save_file_dir):
         os.mkdir(save_file_dir)
-    pred_path = pred_dir + 'pred_summary_'
-    pred_beam_path = pred_dir + 'beam_summary_'
+    pred_path = pred_dir + '/pred_summary_'
+    pred_beam_path = pred_dir + '/beam_summary_'
 
-log_file = save_dir + 'log.txt'
+log_file = os.path.join(save_dir, 'log.txt')
 
 
 def train(sess, dataloader, model):
@@ -108,10 +108,10 @@ def test(sess, dataloader, model):
     write_log(evaluate(sess, dataloader, model, save_dir, 'test'))
 
 def save_model(model, save_dir, cnt):
-    new_dir = save_dir + 'loads' + '/' 
+    new_dir = os.path.join(save_dir, 'loads')
     if not os.path.exists(new_dir):
         os.mkdir(new_dir)
-    nnew_dir = new_dir + str(cnt) + '/'
+    nnew_dir = os.path.join(new_dir, str(cnt))
     if not os.path.exists(nnew_dir):
         os.mkdir(nnew_dir)
     model.save(nnew_dir)
@@ -120,12 +120,12 @@ def save_model(model, save_dir, cnt):
 def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     if mode == 'valid':
         # texts_path = "original_data/valid.summary"
-        texts_path = "processed_data/valid/valid.box.val"
+        texts_path = os.path.join(os.path.dirname(__file__), "processed_data/valid/valid.box.val")
         gold_path = gold_path_valid
         evalset = dataloader.dev_set
     else:
         # texts_path = "original_data/test.summary"
-        texts_path = "processed_data/test/test.box.val"
+        texts_path = os.path.join(os.path.dirname(__file__), "processed_data/test/test.box.val")
         gold_path = gold_path_test
         evalset = dataloader.test_set
     
