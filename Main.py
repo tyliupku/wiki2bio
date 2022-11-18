@@ -48,27 +48,27 @@ tf.app.flags.DEFINE_boolean("decoder_pos", True, 'position information in dual a
 FLAGS = tf.app.flags.FLAGS
 last_best = 0.0
 
-gold_path_test = os.path.join(os.path.dirname(__file__), 'processed_data/test/test_split_for_rouge/gold_summary_')
-gold_path_valid = os.path.join(os.path.dirname(__file__), 'processed_data/valid/valid_split_for_rouge/gold_summary_')
+gold_path_test = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'processed_data/test/test_split_for_rouge/gold_summary_')
+gold_path_valid = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'processed_data/valid/valid_split_for_rouge/gold_summary_')
 
 if FLAGS.load != "0":
 # load an existing model either for further training or testing
-    save_dir = os.path.join(os.path.dirname(__file__), '/results/res/' + FLAGS.load)
-    save_file_dir = os.path.join(save_dir, 'files')
-    pred_dir = os.path.join(os.path.dirname(__file__), 'results/evaluation/' + FLAGS.load)
-    if not os.path.exists(pred_dir):
-        os.mkdir(pred_dir)
-    if not os.path.exists(save_file_dir):
-        os.mkdir(save_file_dir)
-    pred_path = pred_dir + '/pred_summary_'
-    pred_beam_path = pred_dir + '/beam_summary_'
+    proper_dir = FLAGS.load.lstrip('/').split("/")[0]
+    if FLAGS.mode == 'train':
+        save_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + proper_dir)
+        pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + proper_dir)
+        save_file_dir = os.path.join(save_dir, 'files')
+    elif FLAGS.mode == 'test':
+        save_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)
+        pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + proper_dir)
+    load_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)
 else:
 # train a new model
     prefix = 'model_retrained_by_user_' + datetime.now().strftime("%Y%m%d%H%M%S")
-    make_dirs()
-    save_dir =  os.path.join(os.path.dirname(__file__), 'results/res/' + prefix)
+    save_dir =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + prefix)
     save_file_dir = os.path.join(save_dir, 'files')
-    pred_dir = os.path.join(os.path.dirname(__file__), 'results/evaluation/' + prefix)
+    pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + prefix)
+    make_dirs()
     try: 
         os.makedirs(pred_dir)
     except OSError:
@@ -84,8 +84,9 @@ else:
     except OSError:
         if not os.path.isdir(pred_dir):
             raise
-    pred_path = pred_dir + '/pred_summary_'
-    pred_beam_path = pred_dir + '/beam_summary_'
+
+pred_path = os.path.join(pred_dir, 'pred_summary_')
+pred_beam_path = os.path.join(pred_dir, 'beam_summary_')
 
 log_file = os.path.join(save_dir, 'log.txt')
 
@@ -95,31 +96,25 @@ def train(sess, dataloader, model):
     global pred_dir
     
     if FLAGS.load != "0":
-    # Continue training of existing model
-        k = 0
+        # Continue training of existing model
+        e = 0
         try:
-            k = int(save_dir.rstrip('/').split("/")[-1])
+            e = int(FLAGS.load.rstrip('/').split("/")[-1])
         except ValueError:
             pass
-        if k > 0:
+        if e > 0:
             # Loaded model from last train epoch
-            if k < FLAGS.epoch:
-            # Maximum number of epochs not reached yet
-                proper_dir = "/".join(FLAGS.load.split("/"))
-                save_dir = os.path.join(os.path.dirname(__file__), '/results/res/' + proper_dir)
-                pred_dir = os.path.join(os.path.dirname(__file__), '/results/evaluation/' + proper_dir)
-                write_log("#######################################################")
-                for flag, val in FLAGS.flag_values_dict().iteritems():
-                    write_log(flag + " = " + str(val))
-                write_log("#######################################################")
+            if e < FLAGS.epoch:
+                # Maximum number of epochs not reached yet
+                k = e * FLAGS.report
                 trainset = dataloader.train_set
                 loss, start_time = 0.0, time.time()
-                for _ in range(FLAGS.epoch):
+                for _ in range(e, FLAGS.epoch):
                     for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                         loss += model(x, sess)
                         k += 1
                         progress_bar(k%FLAGS.report, FLAGS.report)
-                        if (k % FLAGS.report == 0):
+                        if k % FLAGS.report == 0:
                             cost_time = time.time() - start_time
                             write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
                             loss, start_time = 0.0, time.time()
@@ -146,7 +141,7 @@ def train(sess, dataloader, model):
                 loss += model(x, sess)
                 k += 1
                 progress_bar(k%FLAGS.report, FLAGS.report)
-                if (k % FLAGS.report == 0):
+                if k % FLAGS.report == 0:
                     cost_time = time.time() - start_time
                     write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
                     loss, start_time = 0.0, time.time()
@@ -173,12 +168,12 @@ def save_model(model, save_dir, cnt):
 def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     if mode == 'valid':
         # texts_path = "original_data/valid.summary"
-        texts_path = os.path.join(os.path.dirname(__file__), "processed_data/valid/valid.box.val")
+        texts_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "processed_data/valid/valid.box.val")
         gold_path = gold_path_valid
         evalset = dataloader.dev_set
     else:
         # texts_path = "original_data/test.summary"
-        texts_path = os.path.join(os.path.dirname(__file__), "processed_data/test/test.box.val")
+        texts_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "processed_data/test/test.box.val")
         gold_path = gold_path_test
         evalset = dataloader.test_set
     
@@ -253,17 +248,21 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
 
 
 def write_log(s):
+    global log_file
+
     print s
     with open(log_file, 'a+') as f:
         f.write(s+'\n')
 
 
 def main():
+    global log_file
+
     config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
     with tf.compat.v1.Session(config=config) as sess:
         #copy_file(save_file_dir)
-        dataloader = DataLoader(os.path.join(os.path.dirname(__file__), FLAGS.dir), FLAGS.limits)
+        dataloader = DataLoader(os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.dir), FLAGS.limits)
         model = SeqUnit(batch_size=FLAGS.batch_size, hidden_size=FLAGS.hidden_size, emb_size=FLAGS.emb_size,
                         field_size=FLAGS.field_size, pos_size=FLAGS.pos_size, field_vocab=FLAGS.field_vocab,
                         source_vocab=FLAGS.source_vocab, position_vocab=FLAGS.position_vocab,
@@ -273,8 +272,9 @@ def main():
                         encoder_add_pos=FLAGS.encoder_pos, learning_rate=FLAGS.learning_rate)
         sess.run(tf.compat.v1.global_variables_initializer())
         # copy_file(save_file_dir)
+        log_file = log_file.split('.txt')[0] + '_' + FLAGS.mode + '.txt'
         if FLAGS.load != '0':
-            model.load(save_dir)
+            model.load(load_dir)
         if FLAGS.mode == 'train':
             train(sess, dataloader, model)
         else:

@@ -3,8 +3,9 @@
 # @Time    : 17-4-27 下午8:37
 # @Author  : Tianyu Liu
 
-import tensorflow as tf
+import os
 import pickle
+import tensorflow as tf
 from AttentionUnit import AttentionWrapper
 from dualAttentionUnit import dualAttentionWrapper
 from LstmUnit import LstmUnit
@@ -428,16 +429,16 @@ class SeqUnit(object):
 
     def save(self, path):
         for u in self.units:
-            self.units[u].save(path+u+".pkl")
+            self.units[u].save(os.path.join(path, u+".pkl"))
         param_values = {}
         for param in self.params:
             param_values[param] = self.params[param].eval()
-        with open(path+self.name+".pkl", 'wb') as f:
+        with open(os.path.join(path, self.name+".pkl"), 'wb') as f:
             pickle.dump(param_values, f, True)
 
     def load(self, path):
         for u in self.units:
-            self.units[u].load(path+u+".pkl")
-        param_values = pickle.load(open(path+self.name+".pkl", 'rb'))
+            self.units[u].load(os.path.join(path, u+".pkl"))
+        param_values = pickle.load(open(os.path.join(path, self.name+".pkl"), 'rb'))
         for param in param_values:
             self.params[param].load(param_values[param])
