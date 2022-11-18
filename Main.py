@@ -53,21 +53,40 @@ gold_path_valid = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pro
 
 if FLAGS.load != "0":
 # load an existing model either for further training or testing
-    proper_dir = FLAGS.load.lstrip('/').split("/")[0]
+    proper_dir = None
+    print(FLAGS.load.strip('.').strip('/'))
+    if os.path.isabs(FLAGS.load):
+        if 'wiki2bio/results/res' in FLAGS.load:
+            proper_dir = FLAGS.load.split('wiki2bio/results/res')[1].split('/')[0]
+            load_dir = FLAGS.load
+    else:
+        if os.path.isdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.load)):
+            proper_dir = FLAGS.load.strip('.').split('results/res')[1].lstrip('/').split('/')[0]
+            load_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.load)
+        elif os.path.isdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)):
+            proper_dir = FLAGS.load.split('/')[0]
+            load_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)
+
+    assert proper_dir, "Wrong load path -- it can either be a plain model directory name " + \
+                       "or an absolute path to a model directory or a relative path to a " + \
+                       "model subdirectory within the project directory"
+
     if FLAGS.mode == 'train':
         save_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + proper_dir)
         pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + proper_dir)
         save_file_dir = os.path.join(save_dir, 'files')
+        log_file = os.path.join(save_dir, 'log_train.txt')
     elif FLAGS.mode == 'test':
         save_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)
         pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + proper_dir)
-    load_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)
+        log_file = os.path.join(save_dir, 'log_test.txt')
 else:
 # train a new model
     prefix = 'model_retrained_by_user_' + datetime.now().strftime("%Y%m%d%H%M%S")
     save_dir =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + prefix)
-    save_file_dir = os.path.join(save_dir, 'files')
     pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + prefix)
+    save_file_dir = os.path.join(save_dir, 'files')
+    log_file = os.path.join(save_dir, 'log_train.txt')
     make_dirs()
     try: 
         os.makedirs(pred_dir)
@@ -87,8 +106,6 @@ else:
 
 pred_path = os.path.join(pred_dir, 'pred_summary_')
 pred_beam_path = os.path.join(pred_dir, 'beam_summary_')
-
-log_file = os.path.join(save_dir, 'log.txt')
 
 
 def train(sess, dataloader, model):
@@ -272,7 +289,6 @@ def main():
                         encoder_add_pos=FLAGS.encoder_pos, learning_rate=FLAGS.learning_rate)
         sess.run(tf.compat.v1.global_variables_initializer())
         # copy_file(save_file_dir)
-        log_file = log_file.split('.txt')[0] + '_' + FLAGS.mode + '.txt'
         if FLAGS.load != '0':
             model.load(load_dir)
         if FLAGS.mode == 'train':
