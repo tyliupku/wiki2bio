@@ -54,22 +54,22 @@ gold_path_valid = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pro
 if FLAGS.load != "0":
 # load an existing model either for further training or testing
     proper_dir = None
-    print(FLAGS.load.strip('.').strip('/'))
     if os.path.isabs(FLAGS.load):
         if 'wiki2bio/results/res' in FLAGS.load:
-            proper_dir = FLAGS.load.split('wiki2bio/results/res')[1].split('/')[0]
+            proper_dir = FLAGS.load.split('wiki2bio/results/res/')[1].split('/')[0]
             load_dir = FLAGS.load
     else:
         if os.path.isdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.load)):
-            proper_dir = FLAGS.load.strip('.').split('results/res')[1].lstrip('/').split('/')[0]
+            proper_dir = FLAGS.load.strip('.').split('results/res/')[1].split('/')[0]
             load_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.load)
         elif os.path.isdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)):
             proper_dir = FLAGS.load.split('/')[0]
             load_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + FLAGS.load)
 
-    assert proper_dir, "Wrong load path -- it can either be a plain model directory name " + \
-                       "or an absolute path to a model directory or a relative path to a " + \
-                       "model subdirectory within the project directory"
+    assert proper_dir, "Wrong load path -- it must be a subdirectory within the project under the " + \
+                       "results/res/ directory with the model name and the loaded epoch, which can be given " + \
+                       "either as a model_name/loads/epoch or as an absolute path to the epoch subdirectory " + \
+                       "or as a relative path to the epoch subdirectory"
 
     if FLAGS.mode == 'train':
         save_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + proper_dir)
@@ -111,7 +111,7 @@ pred_beam_path = os.path.join(pred_dir, 'beam_summary_')
 def train(sess, dataloader, model):
     global save_dir
     global pred_dir
-    
+
     if FLAGS.load != "0":
         # Continue training of existing model
         e = 0
@@ -202,7 +202,7 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     # with copy
     pred_list, pred_list_copy, gold_list = [], [], []
     pred_unk, pred_mask = [], []
-    
+
     k = 0
     for x in dataloader.batch_iter(evalset, FLAGS.batch_size, False):
         predictions, atts = model.generate(x, sess)
