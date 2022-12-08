@@ -34,7 +34,7 @@ tf.app.flags.DEFINE_string("mode", 'train', 'train or test')
 tf.app.flags.DEFINE_string("load", '0', 'load directory') # BBBBBESTOFAll
 tf.app.flags.DEFINE_string("dir", 'processed_data', 'data set directory')
 tf.app.flags.DEFINE_integer("limits", 0, 'max data set size')
-
+tf.app.flags.DEFINE_integer("gpu", -1, 'GPU ID for model training')
 
 tf.app.flags.DEFINE_boolean("dual_attention", True, 'dual attention layer or normal attention')
 tf.app.flags.DEFINE_boolean("fgate_encoder", True, 'add field gate in encoder lstm')
@@ -52,7 +52,7 @@ gold_path_test = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'proc
 gold_path_valid = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'processed_data/valid/valid_split_for_rouge/gold_summary_')
 
 if FLAGS.load != "0":
-# load an existing model either for further training or testing
+    # load an existing model either for further training or testing
     proper_dir = None
     if os.path.isabs(FLAGS.load):
         if 'wiki2bio/results/res' in FLAGS.load:
@@ -81,7 +81,7 @@ if FLAGS.load != "0":
         pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + proper_dir)
         log_file = os.path.join(save_dir, 'log_test.txt')
 else:
-# train a new model
+    # train a new model
     prefix = 'model_retrained_by_user_' + datetime.now().strftime("%Y%m%d%H%M%S")
     save_dir =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/res/' + prefix)
     pred_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'results/evaluation/' + prefix)
@@ -145,7 +145,7 @@ def train(sess, dataloader, model):
             # Parsing failed -- can not train model
             print("Model can not be trained further -- last known train epoch missing")
     else:
-    # Create and train a new model
+        # Create and train a new model
         write_log("#######################################################")
         for flag, val in FLAGS.flag_values_dict().iteritems():
             write_log(flag + " = " + str(val))
@@ -243,8 +243,7 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     recall, precision, F_measure = PythonROUGE(pred_set, gold_set, ngram_order=4)
     bleu = corpus_bleu(gold_list, pred_list)
     copy_result = "with copy F_measure: %s Recall: %s Precision: %s BLEU: %s\n" % \
-    (str(F_measure), str(recall), str(precision), str(bleu))
-    # print copy_result
+        (str(F_measure), str(recall), str(precision), str(bleu))
 
     for tk in range(k):
         with open(pred_path + str(tk), 'w') as sw:
@@ -253,12 +252,11 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     recall, precision, F_measure = PythonROUGE(pred_set, gold_set, ngram_order=4)
     bleu = corpus_bleu(gold_list, pred_unk)
     nocopy_result = "without copy F_measure: %s Recall: %s Precision: %s BLEU: %s\n" % \
-    (str(F_measure), str(recall), str(precision), str(bleu))
-    # print nocopy_result
+        (str(F_measure), str(recall), str(precision), str(bleu))
+
     result = copy_result + nocopy_result 
-    # print result
-    if mode == 'valid':
-        print result
+
+    print result
 
     return result
 
@@ -267,36 +265,74 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
 def write_log(s):
     global log_file
 
-    print s
     with open(log_file, 'a+') as f:
         f.write(s+'\n')
 
 
 def main():
-    global log_file
+    # Stores GPU availability status, if the use of GPU was requested
+    use_gpu = False
 
-    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.allow_growth = True
-    with tf.compat.v1.Session(config=config) as sess:
-        #copy_file(save_file_dir)
-        dataloader = DataLoader(os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.dir), FLAGS.limits)
-        model = SeqUnit(batch_size=FLAGS.batch_size, hidden_size=FLAGS.hidden_size, emb_size=FLAGS.emb_size,
-                        field_size=FLAGS.field_size, pos_size=FLAGS.pos_size, field_vocab=FLAGS.field_vocab,
-                        source_vocab=FLAGS.source_vocab, position_vocab=FLAGS.position_vocab,
-                        target_vocab=FLAGS.target_vocab, scope_name="seq2seq", name="seq2seq",
-                        field_concat=FLAGS.field, position_concat=FLAGS.position,
-                        fgate_enc=FLAGS.fgate_encoder, dual_att=FLAGS.dual_attention, decoder_add_pos=FLAGS.decoder_pos,
-                        encoder_add_pos=FLAGS.encoder_pos, learning_rate=FLAGS.learning_rate)
-        sess.run(tf.compat.v1.global_variables_initializer())
-        # copy_file(save_file_dir)
-        if FLAGS.load != '0':
-            model.load(load_dir)
-        if FLAGS.mode == 'train':
-            train(sess, dataloader, model)
-        else:
-            test(sess, dataloader, model)
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+
+    # If the use of GPU was requested in command-line arguments
+    if FLAGS.gpu >= 0:
+        gpu_id = str(FLAGS.gpu)
+
+        with tf.compat.v1.Session(config=config) as session:
+            # Check if the requested GPU ID is available on the system
+            for device in session.list_devices():
+                dev = device.name.split('/')[-1]
+                if dev == 'gpu:' + gpu_id or dev == 'GPU:' + gpu_id:
+                    use_gpu = True
+                    break
+
+        if not use_gpu:
+            print "GPU ID %s not found on the system, the CPU will be used instead" % str(FLAGS.gpu)
+
+    if not use_gpu:
+        # Either the requested GPU ID is unavailable or the use of GPU was not requested
+        with tf.compat.v1.Session(config=config) as session:
+            #copy_file(save_file_dir)
+            dataloader = DataLoader(os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.dir), FLAGS.limits)
+            model = SeqUnit(batch_size=FLAGS.batch_size, hidden_size=FLAGS.hidden_size, emb_size=FLAGS.emb_size,
+                            field_size=FLAGS.field_size, pos_size=FLAGS.pos_size, field_vocab=FLAGS.field_vocab,
+                            source_vocab=FLAGS.source_vocab, position_vocab=FLAGS.position_vocab,
+                            target_vocab=FLAGS.target_vocab, scope_name="seq2seq", name="seq2seq",
+                            field_concat=FLAGS.field, position_concat=FLAGS.position,
+                            fgate_enc=FLAGS.fgate_encoder, dual_att=FLAGS.dual_attention, decoder_add_pos=FLAGS.decoder_pos,
+                            encoder_add_pos=FLAGS.encoder_pos, learning_rate=FLAGS.learning_rate)
+            session.run(tf.compat.v1.global_variables_initializer())
+
+            if FLAGS.load != '0':
+                model.load(load_dir)
+            if FLAGS.mode == 'train':
+                train(session, dataloader, model)
+            else:
+                test(session, dataloader, model)
+    else:
+        # The requested GPU ID is available on the system
+        config.gpu_options.allow_growth = True
+        with tf.compat.v1.Session(config=config) as session:
+            with tf.device('/' + dev + ':' + gpu_id):
+                #copy_file(save_file_dir)
+                dataloader = DataLoader(os.path.join(os.path.dirname(os.path.realpath(__file__)), FLAGS.dir), FLAGS.limits)
+                model = SeqUnit(batch_size=FLAGS.batch_size, hidden_size=FLAGS.hidden_size, emb_size=FLAGS.emb_size,
+                                field_size=FLAGS.field_size, pos_size=FLAGS.pos_size, field_vocab=FLAGS.field_vocab,
+                                source_vocab=FLAGS.source_vocab, position_vocab=FLAGS.position_vocab,
+                                target_vocab=FLAGS.target_vocab, scope_name="seq2seq", name="seq2seq",
+                                field_concat=FLAGS.field, position_concat=FLAGS.position,
+                                fgate_enc=FLAGS.fgate_encoder, dual_att=FLAGS.dual_attention, decoder_add_pos=FLAGS.decoder_pos,
+                                encoder_add_pos=FLAGS.encoder_pos, learning_rate=FLAGS.learning_rate)
+                session.run(tf.compat.v1.global_variables_initializer())
+
+                if FLAGS.load != '0':
+                    model.load(load_dir)
+                if FLAGS.mode == 'train':
+                    train(session, dataloader, model)
+                else:
+                    test(session, dataloader, model)
 
 
 if __name__=='__main__':
-    # with tf.device('/gpu:' + FLAGS.gpu):
     main()
