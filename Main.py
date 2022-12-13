@@ -126,11 +126,11 @@ def train(sess, dataloader, model):
                 k = e * FLAGS.report
                 trainset = dataloader.train_set
                 loss, start_time = 0.0, time.time()
-                for _ in range(e, FLAGS.epoch):
+                for e in range(e, FLAGS.epoch):
                     for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                         loss += model(x, sess)
                         k += 1
-                        progress_bar(k%FLAGS.report, FLAGS.report)
+                        progress_bar(e, k%FLAGS.report, FLAGS.report)
                         if k % FLAGS.report == 0:
                             cost_time = time.time() - start_time
                             write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
@@ -153,11 +153,11 @@ def train(sess, dataloader, model):
         trainset = dataloader.train_set
         k = 0
         loss, start_time = 0.0, time.time()
-        for _ in range(FLAGS.epoch):
+        for e in range(FLAGS.epoch):
             for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                 loss += model(x, sess)
                 k += 1
-                progress_bar(k%FLAGS.report, FLAGS.report)
+                progress_bar(e, k%FLAGS.report, FLAGS.report)
                 if k % FLAGS.report == 0:
                     cost_time = time.time() - start_time
                     write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
