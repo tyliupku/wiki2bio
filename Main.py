@@ -114,19 +114,19 @@ def train(sess, dataloader, model):
 
     if FLAGS.load != "0":
         # Continue training of existing model
-        e = 0
+        last_epoch = 0
         try:
-            e = int(FLAGS.load.rstrip('/').split("/")[-1])
+            last_epoch = int(FLAGS.load.rstrip('/').split("/")[-1])
         except ValueError:
             pass
-        if e > 0:
-            # Loaded model from last train epoch
-            if e < FLAGS.epoch:
+        if last_epoch > 0:
+            # Loaded model from last training epoch
+            if last_epoch < FLAGS.epoch:
                 # Maximum number of epochs not reached yet
-                k = e * FLAGS.report
+                k = last_epoch * FLAGS.report
                 trainset = dataloader.train_set
                 loss, start_time = 0.0, time.time()
-                for e in range(e, FLAGS.epoch):
+                for e in range(last_epoch+1, FLAGS.epoch+1):
                     for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                         loss += model(x, sess)
                         k += 1
@@ -140,10 +140,10 @@ def train(sess, dataloader, model):
                                 write_log(evaluate(sess, dataloader, model, ksave_dir, 'valid'))
             else:
                 # Maximum number of training epochs reached
-                print("Model can not be trained further -- maximum number of training epochs reached")
+                print("Model can not be trained further -- maximum number of requested training epochs reached")
         else:
             # Parsing failed -- can not train model
-            print("Model can not be trained further -- last known train epoch missing")
+            print("Model can not be trained further -- last known training epoch missing")
     else:
         # Create and train a new model
         write_log("#######################################################")
@@ -153,7 +153,7 @@ def train(sess, dataloader, model):
         trainset = dataloader.train_set
         k = 0
         loss, start_time = 0.0, time.time()
-        for e in range(FLAGS.epoch):
+        for e in range(1, FLAGS.epoch+1):
             for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                 loss += model(x, sess)
                 k += 1
