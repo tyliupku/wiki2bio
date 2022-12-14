@@ -120,19 +120,20 @@ def train(sess, dataloader, model):
         except ValueError:
             pass
         if last_load > 0:
-            k = last_load * FLAGS.batch_size * FLAGS.report
-            last_epoch = 1 + k // len(dataloader.train_set[0])
+            last_epoch = 1 + (last_load * FLAGS.report * FLAGS.batch_size) // len(dataloader.train_set[0])
             # Loaded model from last training epoch
             if last_epoch < FLAGS.epoch:
                 # Maximum number of epochs not reached yet
-                idx = k % len(dataloader.train_set[0])
+                k = last_load * FLAGS.report
+                idx = (k * FLAGS.batch_size) % len(dataloader.train_set[0])
+                print "EPOCH %s\nK %s\nINDEX %s" % (str(last_epoch), str(k), str(idx))
                 trainset = tuple([dataloader.train_set[i][idx:] for i in range(len(dataloader.train_set))])
                 loss, start_time = 0.0, time.time()
                 for e in range(last_epoch, FLAGS.epoch+1):
                     for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                         loss += model(x, sess)
                         k += 1
-                        progress_bar(e, k%FLAGS.report, FLAGS.report)
+                        progress_bar("Epoch %s - Training model" % e, k%FLAGS.report, FLAGS.report)
                         if k % FLAGS.report == 0:
                             cost_time = time.time() - start_time
                             write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
@@ -159,7 +160,7 @@ def train(sess, dataloader, model):
             for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                 loss += model(x, sess)
                 k += 1
-                progress_bar(e, k%FLAGS.report, FLAGS.report)
+                progress_bar("Epoch %s - Training model" % e, k%FLAGS.report, FLAGS.report)
                 if k % FLAGS.report == 0:
                     cost_time = time.time() - start_time
                     write_log("%d : loss = %.3f, time = %.3f " % (k // FLAGS.report, loss, cost_time))
@@ -190,11 +191,13 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
         texts_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "processed_data/valid/valid.box.val")
         gold_path = gold_path_valid
         evalset = dataloader.dev_set
+        msg = 'Evaluating model'
     else:
         # texts_path = "original_data/test.summary"
         texts_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "processed_data/test/test.box.val")
         gold_path = gold_path_test
         evalset = dataloader.test_set
+        msg = 'Generating text'
     
     # for copy words from the infoboxes
     texts = open(texts_path, 'r').read().strip().split('\n')
@@ -231,6 +234,8 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
                 pred_mask.append([str(x) for x in mask_sum])
                 k += 1
                 idx += 1
+        progress_bar(msg, k, len(texts))
+    print "Writing prediction files..."
     write_word(pred_mask, ksave_dir, mode + "_summary_copy.txt")
     write_word(pred_unk, ksave_dir, mode + "_summary_unk.txt")
 

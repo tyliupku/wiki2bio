@@ -10,7 +10,7 @@ _, term_width = os.popen('stty size', 'r').read().split()
 term_width = int(term_width)
 
 
-def progress_bar(epoch, current, total, msg=None):
+def progress_bar(status, current, total, msg=None):
     global last_time, begin_time
     if current == 0:
         begin_time = time.time()  # Reset for new bar.
@@ -18,7 +18,7 @@ def progress_bar(epoch, current, total, msg=None):
     cur_len = int(TOTAL_BAR_LENGTH*current/total)
     rest_len = int(TOTAL_BAR_LENGTH - cur_len) - 1
 
-    sys.stdout.write('Epoch %s' % str(epoch))
+    sys.stdout.write(status)
     sys.stdout.write(' [')
     for i in range(cur_len):
         sys.stdout.write('=')
