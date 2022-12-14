@@ -114,19 +114,21 @@ def train(sess, dataloader, model):
 
     if FLAGS.load != "0":
         # Continue training of existing model
-        last_epoch = 0
+        last_load = 0
         try:
-            last_epoch = int(FLAGS.load.rstrip('/').split("/")[-1])
+            last_load = int(FLAGS.load.rstrip('/').split("/")[-1])
         except ValueError:
             pass
-        if last_epoch > 0:
+        if last_load > 0:
+            k = last_load * FLAGS.batch_size * FLAGS.report
+            last_epoch = 1 + k // len(dataloader.train_set[0])
             # Loaded model from last training epoch
             if last_epoch < FLAGS.epoch:
                 # Maximum number of epochs not reached yet
-                k = last_epoch * FLAGS.report
-                trainset = dataloader.train_set
+                idx = k % len(dataloader.train_set[0])
+                trainset = tuple([dataloader.train_set[i][idx:] for i in range(len(dataloader.train_set))])
                 loss, start_time = 0.0, time.time()
-                for e in range(last_epoch+1, FLAGS.epoch+1):
+                for e in range(last_epoch, FLAGS.epoch+1):
                     for x in dataloader.batch_iter(trainset, FLAGS.batch_size, True):
                         loss += model(x, sess)
                         k += 1
