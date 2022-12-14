@@ -126,7 +126,6 @@ def train(sess, dataloader, model):
                 # Maximum number of epochs not reached yet
                 k = last_load * FLAGS.report
                 idx = (k * FLAGS.batch_size) % len(dataloader.train_set[0])
-                print "EPOCH %s\nK %s\nINDEX %s" % (str(last_epoch), str(k), str(idx))
                 trainset = tuple([dataloader.train_set[i][idx:] for i in range(len(dataloader.train_set))])
                 loss, start_time = 0.0, time.time()
                 for e in range(last_epoch, FLAGS.epoch+1):
