@@ -4,6 +4,7 @@
 # @Author  : Tianyu Liu
 
 import sys
+import math
 import os
 import tensorflow as tf
 import time
@@ -120,7 +121,7 @@ def train(sess, dataloader, model):
         except ValueError:
             pass
         if last_load > 0:
-            last_epoch = 1 + (last_load * FLAGS.report * FLAGS.batch_size) // len(dataloader.train_set[0])
+            last_epoch = int(math.ceil((last_load * FLAGS.report * FLAGS.batch_size) / len(dataloader.train_set[0])))
             # Loaded model from last training epoch
             if last_epoch < FLAGS.epoch:
                 # Maximum number of epochs not reached yet
@@ -196,7 +197,7 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
         texts_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "processed_data/test/test.box.val")
         gold_path = gold_path_test
         evalset = dataloader.test_set
-        msg = 'Generating text'
+        msg = 'Testing model'
     
     # for copy words from the infoboxes
     texts = open(texts_path, 'r').read().strip().split('\n')
@@ -213,28 +214,27 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
         atts = np.squeeze(atts)
         idx = 0
         for summary in np.array(predictions):
+            summary = list(summary)
+            if 2 in summary:
+                summary = summary[:summary.index(2)] if summary[0] != 2 else [2]
+            real_sum, unk_sum, mask_sum = [], [], []
+            for tk, tid in enumerate(summary):
+                if tid == 3:
+                    sub = texts[k][np.argmax(atts[tk,: len(texts[k]),idx])]
+                    real_sum.append(sub)
+                    mask_sum.append("**" + str(sub) + "**")
+                else:
+                    real_sum.append(v.id2word(tid))
+                    mask_sum.append(v.id2word(tid))
+                unk_sum.append(v.id2word(tid))
+            pred_list.append([str(x) for x in real_sum])
+            pred_unk.append([str(x) for x in unk_sum])
+            pred_mask.append([str(x) for x in mask_sum])
             with open(pred_path + str(k), 'w') as sw:
-                summary = list(summary)
-                if 2 in summary:
-                    summary = summary[:summary.index(2)] if summary[0] != 2 else [2]
-                real_sum, unk_sum, mask_sum = [], [], []
-                for tk, tid in enumerate(summary):
-                    if tid == 3:
-                        sub = texts[k][np.argmax(atts[tk,: len(texts[k]),idx])]
-                        real_sum.append(sub)
-                        mask_sum.append("**" + str(sub) + "**")
-                    else:
-                        real_sum.append(v.id2word(tid))
-                        mask_sum.append(v.id2word(tid))
-                    unk_sum.append(v.id2word(tid))
-                sw.write(" ".join([str(x) for x in real_sum]) + '\n')
-                pred_list.append([str(x) for x in real_sum])
-                pred_unk.append([str(x) for x in unk_sum])
-                pred_mask.append([str(x) for x in mask_sum])
-                k += 1
-                idx += 1
-        progress_bar(msg, k, len(texts))
-    print "Writing prediction files..."
+                sw.write(" ".join(pred_list[k]) + '\n')
+            k += 1
+            idx += 1
+        progress_bar(msg, k%len(texts), len(texts))
     write_word(pred_mask, ksave_dir, mode + "_summary_copy.txt")
     write_word(pred_unk, ksave_dir, mode + "_summary_unk.txt")
 
@@ -242,6 +242,7 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     for tk in range(k):
         with open(gold_path + str(tk), 'r') as g:
             gold_list.append([g.read().strip().split()])
+        progress_bar("Reading gold summaries", tk%k, k)
 
     gold_set = [[gold_path + str(i)] for i in range(k)]
     pred_set = [pred_path + str(i) for i in range(k)]
@@ -254,6 +255,7 @@ def evaluate(sess, dataloader, model, ksave_dir, mode='valid'):
     for tk in range(k):
         with open(pred_path + str(tk), 'w') as sw:
             sw.write(" ".join(pred_unk[tk]) + '\n')
+        progress_bar("Writing unknown summaries", tk%k, k)
 
     recall, precision, F_measure = PythonROUGE(pred_set, gold_set, ngram_order=4)
     bleu = corpus_bleu(gold_list, pred_unk)

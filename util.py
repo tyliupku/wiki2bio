@@ -99,6 +99,13 @@ def copy_file(dst, src=os.getcwd()):
             shutil.copy(os.path.join(src,file), dst)
 
 def write_word(pred_list, save_dir, name):
-    ss = open(os.path.join(save_dir, name), "w+")
-    for item in pred_list:
-        ss.write(" ".join(item) + '\n')
+    if 'copy' in name:
+        msg = 'Writing masked predicted summaries'
+    else:
+        msg = 'Writing unknown predicted summaries'
+    k = 0
+    with open(os.path.join(save_dir, name), "w+") as ss:
+        for item in pred_list:
+            ss.write(" ".join(item) + '\n')
+            k += 1
+            progress_bar(msg, k%len(pred_list), len(pred_list))
