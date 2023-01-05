@@ -117,16 +117,17 @@ def train(sess, dataloader, model):
         # Continue training of existing model
         last_load = 0
         try:
+            # Load model from latest checkpoint
             last_load = int(FLAGS.load.rstrip('/').split("/")[-1])
         except ValueError:
             pass
         if last_load > 0:
+            # Calculate the current training epoch from the last checkpoint
             last_epoch = int(math.ceil(float(last_load * FLAGS.report * FLAGS.batch_size) / len(dataloader.train_set[0])))
-            # Loaded model from last training epoch
             if last_epoch < FLAGS.epoch:
-                # Maximum number of epochs not reached yet
+                # Maximum number of training epochs not reached yet
                 k = last_load * FLAGS.report
-                # Move training set data index to the point of the leftover data from the previous training epoch
+                # Move training set data index to only iterate over the leftover data of the current training epoch
                 idx = (k * FLAGS.batch_size) % len(dataloader.train_set[0])
                 trainset = tuple([dataloader.train_set[i][idx:] for i in range(len(dataloader.train_set))])
                 loss, start_time = 0.0, time.time()
@@ -143,7 +144,7 @@ def train(sess, dataloader, model):
                                 ksave_dir = save_model(model, save_dir, k // FLAGS.report)
                                 write_log(evaluate(sess, dataloader, model, ksave_dir, 'valid'))
                     if e == last_epoch:
-                        # Reset training set to include all training data in following epochs
+                        # Reset training set data index to include all training data in following training epochs
                         trainset = dataloader.train_set
             else:
                 # Maximum number of training epochs reached
