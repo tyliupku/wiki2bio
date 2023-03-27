@@ -8,6 +8,7 @@ mail: mba@priberam.pt
 import os
 import re
 import time
+from datetime import datetime
 
 # Wrapper function to use ROUGE from Python easily
 # Inputs:
@@ -39,8 +40,8 @@ def PythonROUGE(guess_summ_list,ref_summ_list,ngram_order=2):
 #        del temp
     
     # this is the path to your ROUGE distribution
-    ROUGE_path = 'ROUGE/ROUGE-1.5.5.pl'
-    data_path = 'ROUGE/data'
+    ROUGE_path = os.path.join(os.path.dirname(__file__), 'ROUGE/ROUGE-1.5.5.pl')
+    data_path = os.path.join(os.path.dirname(__file__), 'ROUGE/data')
     
     # these are the options used to call ROUGE
     # feel free to edit this is you want to call ROUGE with different options
@@ -48,8 +49,8 @@ def PythonROUGE(guess_summ_list,ref_summ_list,ngram_order=2):
     
     # this is a temporary XML file which will contain information
     # in the format ROUGE uses
-    prefix = str(int(time.time() * 1000))
-    xml_path = prefix + 'temp.xml'
+    prefix = datetime.now().strftime("%Y%m%d%H%M%S")
+    xml_path = os.path.join(os.path.dirname(__file__), prefix + 'temp.xml')
     xml_file = open(xml_path,'w')
     xml_file.write('<ROUGE-EVAL version="1.0">\n')
     for guess_summ_index,guess_summ_file in enumerate(guess_summ_list):
@@ -61,7 +62,7 @@ def PythonROUGE(guess_summ_list,ref_summ_list,ngram_order=2):
     
     
     # this is the file where the output of ROUGE will be stored
-    ROUGE_output_path = prefix + 'ROUGE_result.txt'
+    ROUGE_output_path = os.path.join(os.path.dirname(__file__), prefix + 'ROUGE_result.txt')
     
     # this is where we run ROUGE itself
     exec_command = ROUGE_path + ' -e ' + data_path + ' ' + options + ' -x ' + xml_path + ' > ' + ROUGE_output_path
@@ -123,8 +124,17 @@ def create_xml(xml_file,guess_summ_file,ref_summ_list):
 # This is only called if this file is executed as a script.
 # It shows an example of usage.
 if __name__ == '__main__':
-    guess_summary_list = ['Example/Guess_Summ_1.txt','Example/Guess_Summ_2.txt']
-    ref_summ_list = [['Example/Ref_Summ_1_1.txt','Example/Ref_Summ_1_2.txt'] , ['Example/Ref_Summ_2_1.txt','Example/Ref_Summ_2_2.txt','Example/Ref_Summ_2_3.txt']]
+    guess_summary_list = [
+        os.path.join(os.path.dirname(__file__), 'Example/Guess_Summ_1.txt'),
+        os.path.join(os.path.dirname(__file__), 'Example/Guess_Summ_2.txt')
+    ]
+    ref_summ_list = [
+        [os.path.join(os.path.dirname(__file__), 'Example/Ref_Summ_1_1.txt'),
+         os.path.join(os.path.dirname(__file__), 'Example/Ref_Summ_1_2.txt')],
+        [os.path.join(os.path.dirname(__file__), 'Example/Ref_Summ_2_1.txt'),
+         os.path.join(os.path.dirname(__file__), 'Example/Ref_Summ_2_2.txt'),
+         os.path.join(os.path.dirname(__file__), 'Example/Ref_Summ_2_3.txt')]
+    ]
     recall_list,precision_list,F_measure_list = PythonROUGE(guess_summary_list,ref_summ_list)
     print 'recall = ' + str(recall_list)
     print 'precision = ' + str(precision_list)

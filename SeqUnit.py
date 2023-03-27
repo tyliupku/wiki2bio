@@ -3,8 +3,9 @@
 # @Time    : 17-4-27 下午8:37
 # @Author  : Tianyu Liu
 
-import tensorflow as tf
+import os
 import pickle
+import tensorflow as tf
 from AttentionUnit import AttentionWrapper
 from dualAttentionUnit import dualAttentionWrapper
 from LstmUnit import LstmUnit
@@ -52,16 +53,16 @@ class SeqUnit(object):
         self.units = {}
         self.params = {}
 
-        self.encoder_input = tf.placeholder(tf.int32, [None, None])
-        self.encoder_field = tf.placeholder(tf.int32, [None, None])
-        self.encoder_pos = tf.placeholder(tf.int32, [None, None])
-        self.encoder_rpos = tf.placeholder(tf.int32, [None, None])
-        self.decoder_input = tf.placeholder(tf.int32, [None, None])
-        self.encoder_len = tf.placeholder(tf.int32, [None])
-        self.decoder_len = tf.placeholder(tf.int32, [None])
-        self.decoder_output = tf.placeholder(tf.int32, [None, None])
-        self.enc_mask = tf.sign(tf.to_float(self.encoder_pos))
-        with tf.variable_scope(scope_name):
+        self.encoder_input = tf.compat.v1.placeholder(tf.int32, [None, None])
+        self.encoder_field = tf.compat.v1.placeholder(tf.int32, [None, None])
+        self.encoder_pos = tf.compat.v1.placeholder(tf.int32, [None, None])
+        self.encoder_rpos = tf.compat.v1.placeholder(tf.int32, [None, None])
+        self.decoder_input = tf.compat.v1.placeholder(tf.int32, [None, None])
+        self.encoder_len = tf.compat.v1.placeholder(tf.int32, [None])
+        self.decoder_len = tf.compat.v1.placeholder(tf.int32, [None])
+        self.decoder_output = tf.compat.v1.placeholder(tf.int32, [None, None])
+        self.enc_mask = tf.sign(tf.cast(self.encoder_pos, tf.float32))
+        with tf.compat.v1.variable_scope(scope_name):
             if self.fgate_enc:
                 print 'field-gated encoder LSTM'
                 self.enc_lstm = fgateLstmUnit(self.hidden_size, self.uni_size, self.field_encoder_size, 'encoder_select')
@@ -76,19 +77,19 @@ class SeqUnit(object):
 
         # ======================================== embeddings ======================================== #
         with tf.device('/cpu:0'):
-            with tf.variable_scope(scope_name):
-                self.embedding = tf.get_variable('embedding', [self.source_vocab, self.emb_size])
+            with tf.compat.v1.variable_scope(scope_name):
+                self.embedding = tf.compat.v1.get_variable('embedding', [self.source_vocab, self.emb_size])
                 self.encoder_embed = tf.nn.embedding_lookup(self.embedding, self.encoder_input)
                 self.decoder_embed = tf.nn.embedding_lookup(self.embedding, self.decoder_input)
                 if self.field_concat or self.fgate_enc or self.encoder_add_pos or self.decoder_add_pos:
-                    self.fembedding = tf.get_variable('fembedding', [self.field_vocab, self.field_size])
+                    self.fembedding = tf.compat.v1.get_variable('fembedding', [self.field_vocab, self.field_size])
                     self.field_embed = tf.nn.embedding_lookup(self.fembedding, self.encoder_field)
                     self.field_pos_embed = self.field_embed
                     if self.field_concat:
                         self.encoder_embed = tf.concat([self.encoder_embed, self.field_embed], 2)
                 if self.position_concat or self.encoder_add_pos or self.decoder_add_pos:
-                    self.pembedding = tf.get_variable('pembedding', [self.position_vocab, self.pos_size])
-                    self.rembedding = tf.get_variable('rembedding', [self.position_vocab, self.pos_size])
+                    self.pembedding = tf.compat.v1.get_variable('pembedding', [self.position_vocab, self.pos_size])
+                    self.rembedding = tf.compat.v1.get_variable('rembedding', [self.position_vocab, self.pos_size])
                     self.pos_embed = tf.nn.embedding_lookup(self.pembedding, self.encoder_pos)
                     self.rpos_embed = tf.nn.embedding_lookup(self.rembedding, self.encoder_rpos)
                     if position_concat:
@@ -115,13 +116,13 @@ class SeqUnit(object):
 
         if self.dual_att:
 	        print 'dual attention mechanism used'
-	        with tf.variable_scope(scope_name):
+	        with tf.compat.v1.variable_scope(scope_name):
 	            self.att_layer = dualAttentionWrapper(self.hidden_size, self.hidden_size, self.field_attention_size,
 	                                                    en_outputs, self.field_pos_embed, "attention")
 	            self.units.update({'attention': self.att_layer})
         else:
             print "normal attention used"
-            with tf.variable_scope(scope_name):
+            with tf.compat.v1.variable_scope(scope_name):
                 self.att_layer = AttentionWrapper(self.hidden_size, self.hidden_size, en_outputs, "attention")
                 self.units.update({'attention': self.att_layer})
 
@@ -134,13 +135,13 @@ class SeqUnit(object):
         
 
         losses = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=de_outputs, labels=self.decoder_output)
-        mask = tf.sign(tf.to_float(self.decoder_output))
+        mask = tf.sign(tf.cast(self.decoder_output, tf.float32))
         losses = mask * losses
         self.mean_loss = tf.reduce_mean(losses)
 
-        tvars = tf.trainable_variables()
+        tvars = tf.compat.v1.trainable_variables()
         grads, _ = tf.clip_by_global_norm(tf.gradients(self.mean_loss, tvars), self.grad_clip)
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate)
         self.train_op = optimizer.apply_gradients(zip(grads, tvars))
 
     def encoder(self, inputs, inputs_len):
@@ -254,7 +255,7 @@ class SeqUnit(object):
             o_t = self.dec_out(o_t, finished)
             emit_ta = emit_ta.write(t, o_t)
             att_ta = att_ta.write(t, w_t)
-            next_token = tf.arg_max(o_t, 1)
+            next_token = tf.math.argmax(o_t, 1)
             x_nt = tf.nn.embedding_lookup(self.embedding, next_token)
             finished = tf.logical_or(finished, tf.equal(next_token, self.stop_token))
             finished = tf.logical_or(finished, tf.greater_equal(t, self.max_length))
@@ -266,7 +267,7 @@ class SeqUnit(object):
             loop_vars=(time, x0, h0, emit_ta, att_ta, f0))
 
         outputs = tf.transpose(emit_ta.stack(), [1,0,2])
-        pred_tokens = tf.arg_max(outputs, 2)
+        pred_tokens = tf.math.argmax(outputs, 2)
         atts = att_ta.stack()
         return pred_tokens, atts
 
@@ -428,16 +429,16 @@ class SeqUnit(object):
 
     def save(self, path):
         for u in self.units:
-            self.units[u].save(path+u+".pkl")
+            self.units[u].save(os.path.join(path, u+".pkl"))
         param_values = {}
         for param in self.params:
             param_values[param] = self.params[param].eval()
-        with open(path+self.name+".pkl", 'wb') as f:
+        with open(os.path.join(path, self.name+".pkl"), 'wb') as f:
             pickle.dump(param_values, f, True)
 
     def load(self, path):
         for u in self.units:
-            self.units[u].load(path+u+".pkl")
-        param_values = pickle.load(open(path+self.name+".pkl", 'rb'))
+            self.units[u].load(os.path.join(path, u+".pkl"))
+        param_values = pickle.load(open(os.path.join(path, self.name+".pkl"), 'rb'))
         for param in param_values:
             self.params[param].load(param_values[param])

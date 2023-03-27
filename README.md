@@ -20,7 +20,13 @@ We strongly recommended using GPUs to train the model. It takes about 36~48 hour
 ## Tensorflow
 Our code is based on Tensorflow 1.0.0. You can find the installation instructions [here](https://www.tensorflow.org/versions/r1.1/install/).
 ## Dependencies
-```requirements.txt``` summarize the dependencies of our code. You can install these dependencies by:
+For ROUGE on Ubuntu, install the required Perl dependencies by:
+```
+sudo apt-get -y install perl cpanminus libxml-perl libdb-dev
+cpanm XML::DOM DB_File
+```
+
+```requirements.txt``` summarize the Python dependencies of our code. You can install these dependencies by:
 ```
 pip install -r requirements.txt
 ```

@@ -10,7 +10,7 @@ _, term_width = os.popen('stty size', 'r').read().split()
 term_width = int(term_width)
 
 
-def progress_bar(current, total, msg=None):
+def progress_bar(status, current, total, msg=None):
     global last_time, begin_time
     if current == 0:
         begin_time = time.time()  # Reset for new bar.
@@ -18,6 +18,7 @@ def progress_bar(current, total, msg=None):
     cur_len = int(TOTAL_BAR_LENGTH*current/total)
     rest_len = int(TOTAL_BAR_LENGTH - cur_len) - 1
 
+    sys.stdout.write(status)
     sys.stdout.write(' [')
     for i in range(cur_len):
         sys.stdout.write('=')
@@ -86,6 +87,11 @@ def format_time(seconds):
     return f
 
 def copy_file(dst, src=os.getcwd()):
+    try: 
+        os.makedirs(src)
+    except OSError:
+        if not os.path.isdir(src):
+            raise
     files = os.listdir(src)
     for file in files:
         file_ext = file.split('.')[-1]
@@ -93,7 +99,13 @@ def copy_file(dst, src=os.getcwd()):
             shutil.copy(os.path.join(src,file), dst)
 
 def write_word(pred_list, save_dir, name):
-    ss = open(save_dir + name, "w+")
-    for item in pred_list:
-        ss.write(" ".join(item) + '\n')
-            
+    if 'copy' in name:
+        msg = 'Writing masked predicted summaries'
+    else:
+        msg = 'Writing unknown predicted summaries'
+    k = 0
+    with open(os.path.join(save_dir, name), "w+") as ss:
+        for item in pred_list:
+            ss.write(" ".join(item) + '\n')
+            k += 1
+            progress_bar(msg, k%len(pred_list), len(pred_list))
